@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>购物车</title>
+    <style>
+        .list,.car {
+            width: 300px;
+            height: 300px;
+            background-color: #ccc;
+            padding: 20px;
+            float: left;
+            margin-left: 50px;
+            position: relative;
+        }
+        .unit {
+            margin: 20px;
+        }
+        .unit input {
+            float: right;
+        }
+        .unit span {
+            float: right;
+            padding: 0 10px;
+        }
+        .total {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+        }
+        .remove {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="list">
+            <list v-for="(item,index) in goods" :data=item :index=index @send=handleClick></list>
+        </div>
+        <div class="car">
+            <car v-for="(item,index) in car" :data=item :index=index :total="total" @add="handleAdd" @minus="handleMinus" @remove="handleRemove"></car>
+        </div>
+    </div>
+    <script src="./vue.min.js"></script>
+    <script>
+        // 商品列表组件；
+        Vue.component("list",{
+            props:["data","index"],
+            methods:{
+                send:function(index){
+                    this.$emit("send",index)
+                }
+            },
+            template:`<div class="unit"><strong>{{data.type}}</strong>
+                    <i>{{data.price}}</i>
+                    <input type="button" value="加入购物车" @click="send(index)"/>
+                    </div>`
+        })
+        
+
+        // 购物车组件；
+        Vue.component("car",{
+            props:["data","index","total"],
+            methods:{
+                add:function(index){
+                    this.$emit("add",index)
+                },
+                minus:function(index){
+                    this.$emit("minus",index)
+                },
+                remove:function(index){
+                    this.$emit("remove",index)
+                }
+            },
+            template:`<div class="unit"><strong>{{data.type}}</strong>
+                    <i>{{data.price}}</i>
+                    <input type="button" value="移除" @click='remove(index)' class="remove">
+                    <input type="button" value="+" @click='add(index)'>
+                    <span>{{data.num}}</span>
+                    <input type="button" value="-" @click='minus(index)'>               
+                    <div class="total">共计：{{total}}</div>
+                    </div>`
+        })
+
+        new Vue({
+            el:"#app",
+            data:{
+                goods:[
+                    {
+                        type:'iphone',
+                        price:10000,
+                        num:''
+                    },
+                    {
+                        type:'samsung',
+                        price:8000,
+                        num:''
+                    },
+                    {
+                        type:'huawei',
+                        price:6000,
+                        num:''
+                    },
+                    {
+                        type:'meizu',
+                        price:4000,
+                        num:''
+                    },
+                    {
+                        type:'xiaomi',
+                        price:3000,
+                        num:''
+                    }
+                ],
+                car:[
+
+                ],
+                total:""
+            },
+            methods:{
+                handleClick:function(index){
+                    //  单条数据 this.goods[index] 在商品、购物车两侧使用的同一堆空间，以此来利用indexOf方法校验是否存在该数据.
+                    if(this.car.indexOf(this.goods[index])==-1){
+                        this.goods[index].num = 1;
+                        this.car.push(this.goods[index]);                        
+                    }else{
+                        // var carIndex = this.car.indexOf(this.goods[index]);
+                        // this.car[carIndex].num++;
+                        this.goods[index].num++;
+                    }
+                },
+                handleAdd:function(index){
+                    this.car[index].num++;
+                },
+                handleMinus:function(index){
+                    if(this.car[index].num>0){
+                        this.car[index].num--;
+                    }else{
+                        this.car.splice(index,1);
+                    }
+                },
+                handleRemove:function(index){
+                    this.car.splice(index,1);
+                }
+            },
+            // 深度监听watch，以达到car中每项数据中的num改变时，总价total也随之改变；
+            watch: {
+               car : {
+                    deep: true,
+                    handler: function(){
+                        var total = "";
+                        this.car.forEach(function(v){
+                        total = +total + (v.price * v.num) 
+                        })
+                        this.total = total;
+                        return this.total
+                    }
+               }
+            }
+        })
+    </script>
+</body>
+</html>
